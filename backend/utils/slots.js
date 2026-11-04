@@ -7,6 +7,24 @@ function toHHMM(min) {
   return String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0');
 }
 
+// Pakistan ka abhi ka waqt (server kisi bhi mulk mein ho)
+function nowInKarachi() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Karachi',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date());
+  const get = (type) => parts.find((p) => p.type === type).value;
+  return {
+    today: `${get('year')}-${get('month')}-${get('day')}`,
+    minutes: Number(get('hour')) * 60 + Number(get('minute')),
+  };
+}
+
 async function getFreeSlots(db, staffId, serviceId, date) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date))) {
     return { error: 'date YYYY-MM-DD format mein do' };
@@ -29,10 +47,7 @@ async function getFreeSlots(db, staffId, serviceId, date) {
   const service = svcRows[0];
   if (!service) return { error: 'Ye staff ye service nahi deta' };
 
-  const now = new Date();
-  const today =
-    now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const { today, minutes: nowMin } = nowInKarachi();
 
   const result = { staff, service, slots: [] };
   if (date < today) return result;

@@ -1,4 +1,5 @@
-export const API = 'http://localhost:5002/api';
+// Live site par VITE_API_URL se backend ka address milta hai, apne computer pe localhost
+export const API = import.meta.env.VITE_API_URL || 'http://localhost:5002/api';
 
 const MESSAGES = {
   'Pehle login karo': 'Please log in first.',

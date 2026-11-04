@@ -12,7 +12,7 @@ app.get('/api/health', async (req, res) => {
     await pool.query('SELECT 1');
     res.json({ ok: true, database: 'connected' });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    res.status(500).json({ ok: false, error: e.message || 'database error' });
   }
 });
 
@@ -22,6 +22,11 @@ app.use('/api/public', require('./routes/public'));
 app.use('/api/customer', require('./routes/customer'));
 app.use('/api/staff', require('./routes/staff'));
 
-app.listen(process.env.PORT, () => {
-  console.log('BookEase backend chal raha hai: http://localhost:' + process.env.PORT);
-});
+// Vercel app ko khud chalata hai, apne computer pe listen karo
+if (!process.env.VERCEL) {
+  app.listen(process.env.PORT || 5002, () => {
+    console.log('BookEase backend chal raha hai: http://localhost:' + (process.env.PORT || 5002));
+  });
+}
+
+module.exports = app;
