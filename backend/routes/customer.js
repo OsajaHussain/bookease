@@ -8,11 +8,22 @@ const { getFreeSlots, toMin, toHHMM } = require('../utils/slots');
 const router = express.Router();
 router.use(requireAuth, requireRole('customer'));
 
+const IMG_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/;
+
 // Booking banao (slot 15 minute ke liye roka jata hai)
 router.post('/appointments', async (req, res) => {
   const { staff_id, service_id, date, time } = req.body;
   if (!staff_id || !service_id || !date || !time) {
     return res.status(400).json({ error: 'staff_id, service_id, date aur time do' });
+  }
+
+  const description = String(req.body.request_description || '').trim();
+  const image = req.body.request_image ? String(req.body.request_image) : '';
+  if (description.length > 1000) {
+    return res.status(400).json({ error: 'Description is too long (maximum 1000 characters).' });
+  }
+  if (image && (image.length > 900000 || !IMG_RE.test(image))) {
+    return res.status(400).json({ error: 'The attached image is not valid or is too large. Please choose a smaller image.' });
   }
 
   const conn = await pool.getConnection();
@@ -38,6 +49,13 @@ router.post('/appointments', async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)`,
       [r.staff.business_id, req.user.id, staff_id, service_id, `${date} ${time}:00`, `${date} ${toHHMM(end)}:00`, r.service.price]
     );
+
+    if (description || image) {
+      await conn.query(
+        'INSERT INTO appointment_requests (appointment_id, description, image_data) VALUES (?, ?, ?)',
+        [ins.insertId, description || null, image || null]
+      );
+    }
 
     await conn.commit();
     res.json({ ok: true, appointment_id: ins.insertId, amount: r.service.price, pay_within_min: 15 });
