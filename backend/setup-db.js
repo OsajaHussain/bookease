@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
 
+const FILES = ['schema.sql', 'schema_requests.sql'];
+
 (async () => {
   const conn = await mysql.createConnection({
     host: process.env.DB_HOST,
@@ -14,8 +16,12 @@ const mysql = require('mysql2/promise');
     multipleStatements: true,
   });
 
-  const sql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
-  await conn.query(sql);
+  for (const f of FILES) {
+    const sql = fs.readFileSync(path.join(__dirname, f), 'utf8');
+    await conn.query(sql);
+    console.log('Ran', f);
+  }
+
   console.log('Done: all tables are ready on', process.env.DB_HOST);
   await conn.end();
 })().catch((e) => {

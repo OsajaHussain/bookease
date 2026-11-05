@@ -69,20 +69,84 @@ router.post('/scan', async (req, res) => {
 
 // Aaj ki appointments + kamayi (dashboard ke liye)
 router.get('/today', async (req, res) => {
-  const [rows] = await pool.query(
-    `SELECT a.id, DATE_FORMAT(a.start_time, '%H:%i') AS time, a.status, a.amount,
-            u.full_name AS customer, u.mobile, sv.name AS service, st.name AS staff
-     FROM appointments a
-     JOIN users u ON u.id = a.customer_id
-     JOIN services sv ON sv.id = a.service_id
-     JOIN staff st ON st.id = a.staff_id
-     WHERE a.business_id = ? AND DATE(a.start_time) = CURDATE()
-       AND a.status IN ('confirmed', 'completed')
-     ORDER BY a.start_time`,
-    [req.user.business_id]
-  );
-  const revenue = rows.reduce((sum, r) => sum + r.amount, 0);
-  res.json({ count: rows.length, revenue, appointments: rows });
+  try {
+    const [rows] = await pool.query(
+      `SELECT a.id, DATE_FORMAT(a.start_time, '%H:%i') AS time, a.status, a.amount,
+              u.full_name AS customer, u.mobile, sv.name AS service, st.name AS staff,
+              (r.appointment_id IS NOT NULL) AS has_request
+       FROM appointments a
+       JOIN users u ON u.id = a.customer_id
+       JOIN services sv ON sv.id = a.service_id
+       JOIN staff st ON st.id = a.staff_id
+       LEFT JOIN appointment_requests r ON r.appointment_id = a.id
+       WHERE a.business_id = ? AND DATE(a.start_time) = CURDATE()
+         AND a.status IN ('confirmed', 'completed')
+       ORDER BY a.start_time`,
+      [req.user.business_id]
+    );
+    const revenue = rows.reduce((sum, r) => sum + r.amount, 0);
+    res.json({ count: rows.length, revenue, appointments: rows });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Aane wali saari confirmed bookings (aaj se aage)
+router.get('/upcoming', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT a.id,
+              DATE_FORMAT(a.start_time, '%Y-%m-%d') AS date,
+              DATE_FORMAT(a.start_time, '%H:%i') AS time,
+              a.status, a.amount,
+              u.full_name AS customer, u.mobile,
+              sv.name AS service, st.name AS staff,
+              (r.appointment_id IS NOT NULL) AS has_request,
+              (r.image_data IS NOT NULL) AS has_image,
+              LEFT(r.description, 120) AS note_preview
+       FROM appointments a
+       JOIN users u ON u.id = a.customer_id
+       JOIN services sv ON sv.id = a.service_id
+       JOIN staff st ON st.id = a.staff_id
+       LEFT JOIN appointment_requests r ON r.appointment_id = a.id
+       WHERE a.business_id = ? AND DATE(a.start_time) >= CURDATE()
+         AND a.status IN ('confirmed', 'completed')
+       ORDER BY a.start_time
+       LIMIT 200`,
+      [req.user.business_id]
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Customer ki request (description + photo), sirf isi business ke liye
+router.get('/appointments/:id/request', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT a.id, u.full_name AS customer, sv.name AS service,
+              DATE_FORMAT(a.start_time, '%Y-%m-%d %H:%i') AS start_time,
+              r.description, r.image_data
+       FROM appointments a
+       JOIN users u ON u.id = a.customer_id
+       JOIN services sv ON sv.id = a.service_id
+       LEFT JOIN appointment_requests r ON r.appointment_id = a.id
+       WHERE a.id = ? AND a.business_id = ?`,
+      [req.params.id, req.user.business_id]
+    );
+    const a = rows[0];
+    if (!a) return res.status(404).json({ error: 'Appointment not found.' });
+    res.json({
+      customer: a.customer,
+      service: a.service,
+      when: a.start_time,
+      description: a.description || '',
+      image: a.image_data || '',
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 module.exports = router;

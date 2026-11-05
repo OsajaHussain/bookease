@@ -6,6 +6,8 @@ import Scanner from '../components/Scanner.jsx';
 import ServicesPanel from '../components/ServicesPanel.jsx';
 import StaffPanel from '../components/StaffPanel.jsx';
 import HoursPanel from '../components/HoursPanel.jsx';
+import AppointmentsPanel from '../components/AppointmentsPanel.jsx';
+import RequestModal from '../components/RequestModal.jsx';
 import CountUp from '../components/CountUp.jsx';
 import { Icon } from '../components/Icons.jsx';
 
@@ -16,6 +18,7 @@ export default function Owner() {
   const [tab, setTab] = useState('overview');
   const [today, setToday] = useState(null);
   const [setup, setSetup] = useState(null);
+  const [viewId, setViewId] = useState(null);
   const [error, setError] = useState('');
 
   const loadToday = useCallback(() => {
@@ -39,8 +42,11 @@ export default function Owner() {
     loadSetup();
   }, [loadToday, loadSetup]);
 
+  const closeModal = useCallback(() => setViewId(null), []);
+
   const tabs = [
     ['overview', 'Overview'],
+    ['bookings', 'Appointments'],
     ...(isOwner
       ? [
           ['services', 'Services'],
@@ -129,6 +135,11 @@ export default function Owner() {
                         <b>{a.time}</b> • {a.customer}
                         <div className="muted" style={{ fontSize: 13 }}>{a.service} • {a.staff}</div>
                       </div>
+                      {a.has_request ? (
+                        <button className="btn btn-ghost btn-sm" onClick={() => setViewId(a.id)}>
+                          <Icon name="image" size={14} /> Request
+                        </button>
+                      ) : null}
                       <span className={a.status === 'completed' ? 'pill used' : 'pill ok'}>
                         {a.status === 'completed' ? 'Checked in' : 'Upcoming'}
                       </span>
@@ -139,11 +150,14 @@ export default function Owner() {
             </>
           )}
 
+          {tab === 'bookings' && <AppointmentsPanel token={auth.token} onView={setViewId} />}
           {tab === 'services' && isOwner && <ServicesPanel token={auth.token} onChange={loadSetup} />}
           {tab === 'staff' && isOwner && <StaffPanel token={auth.token} onChange={loadSetup} />}
           {tab === 'hours' && isOwner && <HoursPanel token={auth.token} onChange={loadSetup} />}
         </div>
       </div>
+
+      {viewId && <RequestModal id={viewId} token={auth.token} onClose={closeModal} />}
     </div>
   );
 }

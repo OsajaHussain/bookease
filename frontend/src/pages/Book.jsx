@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import Navbar from '../components/Navbar.jsx';
+import RequestField from '../components/RequestField.jsx';
 import { Icon } from '../components/Icons.jsx';
 
 const TYPE_ICON = { gym: 'dumbbell', salon: 'scissors', clinic: 'cross' };
 const today = () => new Date().toLocaleDateString('en-CA');
+const noDetails = { description: '', image: '' };
 
 function Step({ n, title }) {
   return (
@@ -28,6 +30,7 @@ export default function Book() {
   const [date, setDate] = useState(today());
   const [slots, setSlots] = useState([]);
   const [time, setTime] = useState('');
+  const [details, setDetails] = useState(noDetails);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -48,6 +51,7 @@ export default function Book() {
     setError('');
     setServiceId('');
     setStaffId('');
+    setDetails(noDetails);
     try {
       setData(await api('/public/business/' + slug));
     } catch (e) {
@@ -67,7 +71,14 @@ export default function Book() {
       const b = await api('/customer/appointments', {
         method: 'POST',
         token: auth.token,
-        body: { staff_id: Number(staffId), service_id: Number(serviceId), date, time },
+        body: {
+          staff_id: Number(staffId),
+          service_id: Number(serviceId),
+          date,
+          time,
+          request_description: details.description.trim(),
+          request_image: details.image || undefined,
+        },
       });
       await api(`/customer/appointments/${b.appointment_id}/pay`, { method: 'POST', token: auth.token });
       nav('/customer');
@@ -181,7 +192,12 @@ export default function Book() {
             <div className="summary-row"><span>Date</span><b>{date}</b></div>
             <div className="summary-row"><span>Time</span><b>{time}</b></div>
             <div className="summary-row"><span>Total</span><b>Rs {Number(service.price).toLocaleString()}</b></div>
-            <p className="hint">Checkout is running in test mode. JazzCash and Easypaisa will be connected soon.</p>
+
+            <RequestField type={data.business.business_type} value={details} onChange={setDetails} />
+
+            <p className="hint" style={{ marginTop: 18 }}>
+              Checkout is running in test mode. JazzCash and Easypaisa will be connected soon.
+            </p>
             <button className="btn btn-primary btn-block btn-lg" onClick={confirm} disabled={busy}>
               {busy ? 'Please wait...' : `Pay Rs ${Number(service.price).toLocaleString()} and get ticket`}
             </button>

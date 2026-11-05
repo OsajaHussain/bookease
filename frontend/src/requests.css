@@ -1,0 +1,106 @@
+.req-box {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.req-box h4 { margin: 0 0 4px; font-size: 16px; }
+
+.upload-drop {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #fafbff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.upload-drop:hover { border-color: var(--primary); background: var(--primary-soft); }
+.upload-drop b { display: block; font-size: 14px; }
+.upload-drop small { color: var(--muted); }
+.upload-icon {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.upload-preview { position: relative; display: inline-block; margin-top: 12px; max-width: 100%; }
+.upload-preview img {
+  display: block;
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.upload-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.8);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.upload-remove:hover { background: #000; }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  animation: fadeIn 0.2s ease both;
+}
+.modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow: auto;
+  padding: 24px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  animation: rise 0.3s ease both;
+}
+.modal img {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.modal-note {
+  margin-top: 14px;
+  padding: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.req-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+.day-title { margin: 0 0 6px; font-size: 16px; }
